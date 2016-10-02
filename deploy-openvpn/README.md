@@ -4,9 +4,9 @@ Deploy openvpn on server and client with route all traffic through
 vpn tunnel in ip name space (netns).
 
 ## Requirements
- # Server, scaleway.com or digitalocean.com are recommended
- # Ansible (tested on 2.1.1.0), openvpn, iputils installed locally
- # Public keys on github.com
+ 1. Server, scaleway.com or digitalocean.com are recommended
+ 2. Ansible (tested on 2.1.1.0), openvpn, iputils installed locally
+ 3. Public keys on github.com
 
 ## Variables 
 in var.yaml 
