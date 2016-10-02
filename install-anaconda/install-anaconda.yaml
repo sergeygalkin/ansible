@@ -1,0 +1,20 @@
+---
+- hosts: servers
+  remote_user: anaconda
+  vars:
+       anaconda_installer: Anaconda3-4.1.1-Linux-x86_64.sh
+  tasks:
+     - name: check anaconda3 dir
+       stat: path=/home/anaconda/anaconda3
+       register: anaconda
+     - name: Download Anaconda
+       command: "wget http://repo.continuum.io/archive/{{ anaconda_installer }} chdir=/tmp"
+       when: anaconda.stat.isdir is not defined or not anaconda.stat.isdir
+     - name: Install anaconda
+       command: "/bin/bash /tmp/{{ anaconda_installer }} -b"
+       tags: anaconda
+       when: anaconda.stat.isdir is not defined or not anaconda.stat.isdir
+     - name: Delete anaconda installer
+       file: path=/tmp/{{ anaconda_installer }} state=absent
+     - name: install fuzzywuzzy==0.11.1
+       pip: name=fuzzywuzzy version=0.11.1 executable=/home/anaconda/anaconda3/bin/pip

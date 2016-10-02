@@ -1,0 +1,64 @@
+---
+- hosts: servers
+  remote_user: gals
+  become: true
+  become_user: root
+  vars:
+      ant_version: 1.9.7
+      java_home: /opt/jdk1.7.0_80
+  tasks:
+     - name: Install packages
+       apt: name={{ item }} state=installed
+       with_items:
+           - build-essential
+           - g++
+           - cmake
+           - git
+           - libgtk2.0-dev
+           - pkg-config
+           - libavcodec-dev
+           - libavformat-dev
+           - libswscale-dev
+           - python-dev
+           - python-numpy
+           - libtbb2
+           - libtbb-dev
+           - libjpeg-dev
+           - libpng-dev
+           - libtiff-dev
+           - libjasper-dev
+           - libdc1394-22-dev
+     - git: repo=git://github.com/opencv/opencv.git
+           dest=/tmp/opencv
+           version=3.1.0
+           accept_hostkey=yes
+     - name: Download Ant
+       get_url: url=http://apache.rediris.es/ant/binaries/apache-ant-{{ ant_version }}-bin.tar.gz dest=/tmp/apache-ant-{{ ant_version }}-bin.tar.gz
+       tags: ant
+     - name: Unarchive the compressed Ant binaries
+       unarchive: copy=no src=/tmp/apache-ant-{{ ant_version }}-bin.tar.gz dest=/opt/ creates=/opt/apache-ant-{{ ant_version }}
+       tags: ant
+     - name: Create /tmp/opencv/build
+       file: path=/tmp/opencv/build state=directory
+     - name: Run cmake
+       command: cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_SHARED_LIBS=OFF .. chdir=/tmp/opencv/build
+       environment:
+          JAVA_HOME: "{{ java_home }}"
+          ANT_HOME: "/opt/apache-ant-{{ ant_version }}"
+          PATH: "{{ ansible_env.PATH }}:/opt/apache-ant-{{ ant_version }}/bin"
+     - name: Run make
+       command: make -j7 chdir=/tmp/opencv/build
+       environment:
+          JAVA_HOME: "{{ java_home }}"
+          ANT_HOME: "/opt/apache-ant-{{ ant_version }}"
+          PATH: "{{ ansible_env.PATH }}:/opt/apache-ant-{{ ant_version }}/bin"
+     - name: Run make install
+       command: make install chdir=/tmp/opencv/build
+       environment:
+          JAVA_HOME: "{{ java_home }}"
+          ANT_HOME: "/opt/apache-ant-{{ ant_version }}"
+          PATH: "{{ ansible_env.PATH }}:/opt/apache-ant-{{ ant_version }}/bin"
+     - name: Delete /tmp/opencv
+       file: path=/tmp/opencv state=absent
+     - name: Delete /opt/apache-ant-{{ ant_version }}
+       file: path=/opt/apache-ant-{{ ant_version }} state=absent
