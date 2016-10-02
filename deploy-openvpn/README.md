@@ -41,20 +41,20 @@ Tested on Ubuntu 16.04 on www.scaleway.com
  * add NAT rules
 
 ## Using after deployment
-Start
+### Start
 ```
 systemctl start netns-vpn
 ```
-Check
+### Check
 ```
 alias nsvpn="sudo /bin/ip netns exec vpn sudo -u $USER"
 nsvpn curl -w "\n"  http://ipecho.net/plain
 ```
-Run browser
-
+###Run browser
 Start 'Mozilla Firefox in VPN' or in terminal
 ```
 nsvpn frefox
 ```
-
+### TODO
+Add server deploy through API for scaleway.com and digitalocean.com
 
