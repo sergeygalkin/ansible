@@ -4,4 +4,4 @@ if [ -z "$1" ]; then
    exit 1
 fi
 ansible-playbook  -i ./hosts -K -c local  ./deploy-openvpn-local.yaml
-#ansible-playbook  -i ./hosts -e github_account=$1  -u root ./deploy-openvpn-server.yaml
+ansible-playbook  -i ./hosts -e github_account=$1  -u root ./deploy-openvpn-server.yaml

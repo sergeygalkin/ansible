@@ -3,10 +3,14 @@
 Deploy openvpn on server and client with route all traffic through 
 vpn tunnel in ip name space (netns).
 
+## Using
+execute ./deploy-openvpn.sh
+
 ## Requirements
- 1. Server, scaleway.com or digitalocean.com are recommended
+ 1. Server, Ubuntu 16.04, scaleway.com or digitalocean.com are recommended
  2. Ansible (tested on 2.1.1.0), openvpn, iputils installed locally
  3. Public keys on github.com
+ 4. Local host with systemd (tested on Gentoo)
 
 ## Variables 
 in var.yaml 
@@ -35,4 +39,22 @@ Tested on Ubuntu 16.04 on www.scaleway.com
  * upload ~/.zshrc
  * generate openvpn configuration
  * add NAT rules
+
+## Using after deployment
+Start
+```
+systemctl start netns-vpn
+```
+Check
+```
+alias nsvpn="sudo /bin/ip netns exec vpn sudo -u $USER"
+nsvpn curl -w "\n"  http://ipecho.net/plain
+```
+Run browser
+
+Start 'Mozilla Firefox in VPN' or in terminal
+```
+nsvpn frefox
+```
+
 

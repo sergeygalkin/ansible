@@ -58,8 +58,8 @@
      - name: Generate {{ openvpn_config_dir }}/openvpn.conf
        template:  src=files/client.conf.j2 dest={{ openvpn_config_dir }}/openvpn.conf backup=yes
        become: yes
-     - name: Add start/stop script to {{ openvpn_config_dir }}/netsn-vpn.sh
-       template:  src=files/vpn-netns.sh.j2 dest={{ openvpn_config_dir }}/netsn-vpn.sh mode=0755
+     - name: Add start/stop script to {{ openvpn_config_dir }}/netns-vpn.sh
+       template:  src=files/netns-vpn.sh.j2 dest={{ openvpn_config_dir }}/netns-vpn.sh mode=0755
        become: yes
      - name: Add /bin/ip netns exec to sudoers without password
        lineinfile: "dest=/etc/sudoers line='{{ansible_user_id}} ALL=NOPASSWD: /bin/ip netns exec vpn sudo -u {{ansible_user_id}}*'"
@@ -67,8 +67,8 @@
      - name: Create /etc/netns/{{ netns_name }}/resolv.conf
        copy: src=files/resolv.conf dest=/etc/netns/{{ netns_name }}/resolv.conf
        become: yes
-     - name: Create /etc/systemd/system/netsn-vpn.service
-       template: src=files/netsn-vpn.service.j2 dest=/etc/systemd/system/netsn-vpn.service
+     - name: Create /etc/systemd/system/netns-vpn.service
+       template: src=files/netns-vpn.service.j2 dest=/etc/systemd/system/netns-vpn.service
        become: yes
        notify: systemd reload
      - name: Create /usr/share/applications/firefox-vpn.desktop 

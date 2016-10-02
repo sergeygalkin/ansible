@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=forking
-ExecStart={{ openvpn_config_dir }}/netsn-vpn.sh start
-ExecStop={{ openvpn_config_dir }}/netsn-vpn.sh stop 
+ExecStart={{ openvpn_config_dir }}/netns-vpn.sh start
+ExecStop={{ openvpn_config_dir }}/netns-vpn.sh stop 
 
 [Install]
 WantedBy=multi-user.target
