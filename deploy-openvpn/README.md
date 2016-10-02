@@ -1,7 +1,11 @@
 #Deploy openvpn to netns
 ## Description 
+### ENG
 Deploy openvpn on server and client with route all traffic through 
 vpn tunnel in ip name space (netns).
+### RUS
+Для тех кому надоело что судьи во всяких Урюпинсках решают что открывать,
+а что не открывать всей стране.
 
 ## Using
 execute ./deploy-openvpn.sh
