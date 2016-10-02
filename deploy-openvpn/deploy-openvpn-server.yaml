@@ -1,0 +1,90 @@
+---
+- hosts: remote
+  handlers:
+     - name: restart ssh
+       service: name=ssh state=restarted
+     - name: restart openvpn@server
+       service: name=openvpn@server state=restarted
+  tasks:
+     - include_vars: vars.yaml
+     - name: get the username running the deploy
+       local_action: command whoami
+       register: local_username
+     - name: Install packages
+       apt: name={{ item }} state=latest
+       with_items:
+         - git
+         - openvpn
+         - tmux
+         - zsh
+         - iptables-persistent
+       register: installation
+     - name: Create group nobody
+       group: name=nobody
+     - name: Create {{local_username.stdout}}
+       user: 
+          name: "{{local_username.stdout}}"
+          shell: /usr/bin/zsh
+     - name: Upload ssh key
+       authorized_key:
+         user: "{{ item }}"
+         key: https://github.com/{{github_account}}.keys
+       with_items:
+         - root
+         - "{{local_username.stdout}}"
+     - name: Disallow root SSH password access 
+       lineinfile: dest=/etc/ssh/sshd_config
+                   regexp="^PermitRootLogin"
+                   line="PermitRootLogin prohibit-password"
+                   state=present
+       notify: 
+          - restart ssh
+     - name: Add {{local_username.stdout}} to sudoers
+       lineinfile: "dest=/etc/sudoers line='{{local_username.stdout}} ALL=(ALL) NOPASSWD: ALL' state=present"
+     - name: Cloning oh-my-zsh
+       git:
+          repo=https://github.com/robbyrussell/oh-my-zsh
+          dest="/home/{{local_username.stdout}}/.oh-my-zsh"
+       when: installation|success
+       register: cloning
+     - name: Chown for oh-my-zsh
+       file: 
+          path=/home/{{local_username.stdout}}/.oh-my-zsh
+          owner={{local_username.stdout}}
+          group={{local_username.stdout}}
+          state=directory
+          recurse=yes
+     - name: Creating ~/.zshrc
+       copy:
+          src=files/zshrc
+          dest=/home/{{local_username.stdout}}/.zshrc
+          owner={{local_username.stdout}}
+          group={{local_username.stdout}}
+     - name: Get keys and serts
+       set_fact:
+          ca_cert: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/ca.crt') }}"
+          vpn_cert: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/issued/server.crt') }}"
+          vpn_key: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/private/server.key') }}"
+          vpn_ta: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/ta.key') }}"
+          dh_key: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/dh.pem') }}"
+     - name: Configure openvpn
+       template: src=files/server.conf.j2  dest=/etc/openvpn/server.conf backup=yes
+       notify:
+          - restart openvpn@server
+     - name: Enable openvpn
+       service: name=openvpn@server enabled=yes 
+     - name: Start openvpn
+       service: name=openvpn@server state=started
+     - name: Add NAT rules
+       iptables: 
+         table=nat
+         chain=POSTROUTING
+         source={{ vpn_network }}/24
+         out_interface=eth0
+         jump=MASQUERADE
+         state=present
+     - name: Save iptables rules
+       command: netfilter-persistent save
+     - name: IP forwarding
+       sysctl: name="net.ipv4.ip_forward" value=1 sysctl_set=yes state=present reload=yes
+

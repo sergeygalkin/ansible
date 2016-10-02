@@ -1,0 +1,77 @@
+---
+- hosts: local
+  vars:
+     certificates:
+        - server
+        - client
+  handlers:
+     - name: systemd reload
+       command: systemctl daemon-reload 
+       become: yes
+  tasks:
+     - include_vars: vars.yaml
+     - set_fact:
+         openvpn_config_dir: /etc/netns/{{ netns_name }}/openvpn
+     - name: Get easy-rsa
+       git: repo=https://github.com/OpenVPN/easy-rsa  dest={{ easy_rsa_path }} version=3.0.1
+     - name: Check pki 
+       stat: path={{ easy_rsa_path }}/easyrsa3/pki
+       register: pki_created
+     - name: Init PKI
+       command: ./easyrsa init-pki chdir={{ easy_rsa_path }}/easyrsa3
+       when: pki_created.stat.exists == False
+     - name: Check CA
+       stat: path={{ easy_rsa_path }}/easyrsa3/pki/ca.crt
+       register: ca_created
+     - name: Build CA
+       command: ./easyrsa --batch build-ca nopass chdir={{ easy_rsa_path }}/easyrsa3
+       when: ca_created.stat.exists == False
+     - name: Check certificates
+       stat: path={{ easy_rsa_path }}/easyrsa3/pki/issued/{{ item }}.crt
+       register: crt_created
+       with_items: "{{ certificates }}"
+     - name: Generate keys and certs
+       command: ./easyrsa --batch build-{{ item.item }}-full {{ item.item }} nopass chdir={{ easy_rsa_path }}/easyrsa3
+       when: "{{ item.stat.exists == false }}" 
+       with_items: "{{ crt_created.results }}"
+     - name: Check DH
+       stat: path={{ easy_rsa_path }}/easyrsa3/pki/dh.pem
+       register: dh_created
+     - name: Generate DH
+       command: ./easyrsa gen-dh chdir={{ easy_rsa_path }}/easyrsa3
+       when: dh_created.stat.exists == False
+     - name: Check ta.key
+       stat: path={{ easy_rsa_path }}/easyrsa3/pki/ta.key
+       register: ta_created
+     - name: Create ta.key
+       command: /usr/sbin/openvpn --genkey --secret {{ easy_rsa_path }}/easyrsa3/pki/ta.key
+       when: ta_created.stat.exists == False 
+     - name: Get keys and serts
+       set_fact:
+          ca_cert: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/ca.crt') }}"
+          vpn_cert: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/issued/client.crt') }}"
+          vpn_key: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/private/client.key') }}"
+          vpn_ta: "{{ lookup('file', '{{ easy_rsa_path }}/easyrsa3/pki/ta.key') }}"
+     - name: Create dir {{ openvpn_config_dir }}
+       file: path={{ openvpn_config_dir }}  state=directory owner=nobody group=nobody
+       become: yes 
+     - name: Generate {{ openvpn_config_dir }}/openvpn.conf
+       template:  src=files/client.conf.j2 dest={{ openvpn_config_dir }}/openvpn.conf backup=yes
+       become: yes
+     - name: Add start/stop script to {{ openvpn_config_dir }}/netsn-vpn.sh
+       template:  src=files/vpn-netns.sh.j2 dest={{ openvpn_config_dir }}/netsn-vpn.sh mode=0755
+       become: yes
+     - name: Add /bin/ip netns exec to sudoers without password
+       lineinfile: "dest=/etc/sudoers line='{{ansible_user_id}} ALL=NOPASSWD: /bin/ip netns exec vpn sudo -u {{ansible_user_id}}*'"
+       become: yes
+     - name: Create /etc/netns/{{ netns_name }}/resolv.conf
+       copy: src=files/resolv.conf dest=/etc/netns/{{ netns_name }}/resolv.conf
+       become: yes
+     - name: Create /etc/systemd/system/netsn-vpn.service
+       template: src=files/netsn-vpn.service.j2 dest=/etc/systemd/system/netsn-vpn.service
+       become: yes
+       notify: systemd reload
+     - name: Create /usr/share/applications/firefox-vpn.desktop 
+       template: src=files/firefox-vpn.desktop.j2 dest=/usr/share/applications/firefox-vpn.desktop
+       become: yes
+

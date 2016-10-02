@@ -1,0 +1,5 @@
+openvpn_port: 34447
+easy_rsa_path: "/tmp/ansible-easy-rsa"
+vpn_network: 10.255.254.0
+netns_network: 192.168.10
+netns_name: vpn

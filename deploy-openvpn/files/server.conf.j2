@@ -1,0 +1,36 @@
+port 37715
+proto udp
+dev tun
+topology subnet
+server {{ vpn_network }}  255.255.255.0
+duplicate-cn
+keepalive 10 120
+comp-lzo
+max-clients 100
+user nobody
+group nobody
+persist-key
+persist-tun
+status /tmp/openvpn-status.log
+verb 3
+mute 20
+mssfix 1432
+key-direction 1
+push "redirect-gateway def1"
+push "dhcp-option DNS 8.8.4.4"
+<ca>
+{{ ca_cert }}
+</ca>
+<cert>
+{{ vpn_cert }}
+</cert>
+<key>
+{{ vpn_key }}
+</key>
+<dh>
+{{ dh_key }}
+</dh>
+<tls-auth>
+{{ vpn_ta }}
+</tls-auth>
+

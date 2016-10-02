@@ -1,0 +1,4 @@
+[remote]
+openvpn-server
+[local]
+localhost
