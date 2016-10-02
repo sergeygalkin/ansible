@@ -11,6 +11,7 @@ execute ./deploy-openvpn.sh
  2. Ansible (tested on 2.1.1.0), openvpn, iputils installed locally
  3. Public keys on github.com
  4. Local host with systemd (tested on Gentoo)
+ 5. Record in /etc/hosts for remote server with name openvpn-server
 
 ## Variables 
 in var.yaml 
