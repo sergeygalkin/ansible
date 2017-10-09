@@ -17,8 +17,7 @@ execute ./deploy-openvpn.sh
  4. Local host with systemd (tested on Gentoo)
  5. Record in /etc/hosts for remote server with name openvpn-server
 
-## Variables 
-in var.yaml 
+## Variables in var.yaml 
  * openvpn_port: OpenVPN port (default  - 34447)
  * easy_rsa_path: ease-rsa path (default - /tmp/ansible-easy-rsa)
  * vpn_network: OpenVPN network (default - 10.255.254.0)
