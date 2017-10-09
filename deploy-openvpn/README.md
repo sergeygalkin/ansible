@@ -1,4 +1,4 @@
-#Deploy openvpn to netns
+# Deploy openvpn to netns
 ## Description 
 ### ENG
 Deploy openvpn on server and client with route all traffic through 
@@ -55,7 +55,7 @@ systemctl start netns-vpn
 alias nsvpn="sudo /bin/ip netns exec vpn sudo -u $USER"
 nsvpn curl -w "\n"  http://ipecho.net/plain
 ```
-###Run browser
+### Run browser
 Start 'Mozilla Firefox in VPN' or in terminal
 ```
 nsvpn frefox
